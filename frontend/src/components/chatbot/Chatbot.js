@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { MessageSquare, X, Send, Shield, ChevronRight } from 'lucide-react';
+import api from '../../utils/api';
 
 const SUGGESTED = [
   'What is DataShield?',
@@ -49,21 +50,15 @@ export default function Chatbot() {
     setLoading(true);
 
     try {
-      const response = await fetch('https://api.anthropic.com/v1/messages', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          model: 'claude-sonnet-4-20250514',
-          max_tokens: 1000,
-          system: SYSTEM_PROMPT,
-          messages: newMessages.map(m => ({ role: m.role, content: m.content })),
-        }),
+      const response = await api.post('/chat', {
+        system: SYSTEM_PROMPT,
+        messages: newMessages,
       });
-      const data = await response.json();
-      const reply = data.content?.[0]?.text || 'Error fetching response.';
+
+      const reply = response.data?.reply || 'Error fetching response.';
       setMessages(prev => [...prev, { role: 'assistant', content: reply }]);
     } catch (e) {
-      setMessages(prev => [...prev, { role: 'assistant', content: '⚠ Connection error. Please try again.' }]);
+      setMessages(prev => [...prev, { role: 'assistant', content: '⚠ Chat service unavailable. Please try again.' }]);
     } finally {
       setLoading(false);
     }
@@ -109,11 +104,10 @@ export default function Chatbot() {
             {messages.map((m, i) => (
               <div key={i} className={`flex ${m.role === 'user' ? 'justify-end' : 'justify-start'}`}>
                 <div
-                  className={`max-w-[85%] px-4 py-3 rounded-sm text-xs font-mono leading-relaxed whitespace-pre-wrap ${
-                    m.role === 'user'
+                  className={`max-w-[85%] px-4 py-3 rounded-sm text-xs font-mono leading-relaxed whitespace-pre-wrap ${m.role === 'user'
                       ? 'bg-[rgba(0,245,255,0.1)] border border-[rgba(0,245,255,0.25)] text-white'
                       : 'bg-shield-700 border border-[rgba(255,255,255,0.06)] text-slate-300'
-                  }`}
+                    }`}
                 >
                   {m.content}
                 </div>

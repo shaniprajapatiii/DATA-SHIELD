@@ -11,6 +11,7 @@ require('dotenv').config();
 const authRoutes = require('./routes/auth');
 const scanRoutes = require('./routes/scan');
 const policyRoutes = require('./routes/policy');
+const chatRoutes = require('./routes/chat');
 
 const app = express();
 
@@ -52,6 +53,7 @@ mongoose
 app.use('/api/auth',   authRoutes);
 app.use('/api/scan',   scanRoutes);
 app.use('/api/policy', policyRoutes);
+app.use('/api/chat',   chatRoutes);
 
 // ─── Health Check ──────────────────────────────────────────────────────────────
 app.get('/api/health', (_req, res) => {
