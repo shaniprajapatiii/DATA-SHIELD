@@ -4,8 +4,8 @@ const bcrypt  = require('bcryptjs');
 const jwt     = require('jsonwebtoken');
 const { body, validationResult } = require('express-validator');
 
-const User       = require('../../models/User');
-const authMiddleware = require('../../middleware/auth');
+const User       = require('../models/User');
+const authMiddleware = require('../middleware/auth');
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 const signToken = (userId) =>

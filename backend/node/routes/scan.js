@@ -2,8 +2,8 @@ const express  = require('express');
 const router   = express.Router();
 const axios    = require('axios');
 
-const authMiddleware  = require('../../middleware/auth');
-const scanController  = require('../../controllers/scanController');
+const authMiddleware  = require('../middleware/auth');
+const scanController  = require('../controllers/scanController');
 
 const PYTHON_ENGINE = process.env.PYTHON_ENGINE_URL || 'http://localhost:8000';
 
