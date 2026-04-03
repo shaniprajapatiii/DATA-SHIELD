@@ -66,6 +66,10 @@ const domScanner = {
   },
 };
 
+if (typeof globalThis !== 'undefined') {
+  globalThis.domScanner = domScanner;
+}
+
 // Export for use in other files
 if (typeof module !== 'undefined' && module.exports) {
   module.exports = domScanner;

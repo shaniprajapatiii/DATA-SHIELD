@@ -3,6 +3,20 @@
  * Manages desktop notifications for high-risk sites
  */
 
+const DATA_SHIELD_ICON_URL = `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(`
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <defs>
+    <linearGradient id="g" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#0ea5e9"/>
+      <stop offset="100%" stop-color="#6366f1"/>
+    </linearGradient>
+  </defs>
+  <rect width="64" height="64" rx="16" fill="#0a0e1a"/>
+  <path d="M32 10L14 18v13c0 12.5 8.8 22.6 18 26 9.2-3.4 18-13.5 18-26V18L32 10z" fill="url(#g)" opacity="0.18" stroke="url(#g)" stroke-width="2.5"/>
+  <path d="M26 32l4.5 4.5L39 28" fill="none" stroke="#38bdf8" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>
+`)}`;
+
 const notificationService = {
   /**
    * Send notification for high-risk scan result
@@ -19,7 +33,7 @@ const notificationService = {
 
     chrome.notifications.create(`scan-${tab.id}`, {
       type:    'basic',
-      iconUrl: 'icons/icon48.png',
+      iconUrl: DATA_SHIELD_ICON_URL,
       title:   '⚠ DataShield – High Risk Detected',
       message: `${domain} scored ${result.risk_score}/100. ${tldr}`,
       buttons: [{ title: 'View Full Report' }],
@@ -36,7 +50,7 @@ const notificationService = {
   notify(title, message, options = {}) {
     chrome.notifications.create({
       type: 'basic',
-      iconUrl: 'icons/icon48.png',
+      iconUrl: DATA_SHIELD_ICON_URL,
       title,
       message,
       ...options,
@@ -57,6 +71,10 @@ const notificationService = {
     }
   },
 };
+
+if (typeof globalThis !== 'undefined') {
+  globalThis.notificationService = notificationService;
+}
 
 // Setup notification button click listener
 chrome.notifications.onButtonClicked.addListener((_notifId) => {

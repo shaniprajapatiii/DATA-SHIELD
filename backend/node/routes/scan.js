@@ -7,6 +7,56 @@ const scanController  = require('../controllers/scanController');
 
 const PYTHON_ENGINE = process.env.PYTHON_ENGINE_URL || 'http://localhost:8000';
 
+async function runPermissionFallback(url, userId) {
+  const fallbackResp = await axios.post(
+    `${PYTHON_ENGINE}/scan/permissions`,
+    { url },
+    { timeout: 30000 }
+  );
+
+  const fallback = fallbackResp.data;
+  const fallbackResult = {
+    success: true,
+    target_url: url,
+    page_title: null,
+    policy_url: null,
+    risk_score: fallback.risk_score,
+    risk_label: fallback.risk_label,
+    score_breakdown: {},
+    permissions: fallback.permissions || [],
+    red_flags: [],
+    policy_findings: {},
+    sentiment: { overall: 'neutral', confidence: 0 },
+    summary: {
+      tldr: 'Privacy policy/terms could not be extracted. Risk score is based on detected permissions only.',
+      bullets: [
+        'No policy text was extracted from this URL.',
+        'Displayed risk is computed from permission/API signals.',
+      ],
+      collected: 'Unknown (policy unavailable)',
+      sharedWith: 'Unknown (policy unavailable)',
+      retainedFor: 'Unknown (policy unavailable)',
+    },
+    scan_duration_ms: null,
+    engine_version: '1.0.0',
+    partial: true,
+    fallback_reason: 'policy_not_found',
+  };
+
+  const saved = await scanController.saveScan({
+    userId,
+    targetUrl: url,
+    riskScore: fallbackResult.risk_score,
+    permissions: fallbackResult.permissions,
+    policyFindings: fallbackResult.policy_findings,
+    redFlags: fallbackResult.red_flags,
+    sentiment: fallbackResult.sentiment,
+    summary: fallbackResult.summary,
+  });
+
+  return { ...fallbackResult, scanId: saved._id };
+}
+
 // ─── POST /api/scan/url ───────────────────────────────────────────────────────
 // Scan a website URL for privacy risks
 router.post('/url', authMiddleware, async (req, res) => {
@@ -35,12 +85,45 @@ router.post('/url', authMiddleware, async (req, res) => {
 
     res.json({ ...result, scanId: saved._id });
   } catch (err) {
+    // If policy extraction fails, fall back to permission-only analysis.
+    if (err.response?.status === 422) {
+      try {
+        const fallbackResult = await runPermissionFallback(url, req.user.id);
+        return res.json(fallbackResult);
+      } catch (fallbackErr) {
+        if (fallbackErr.response) {
+          return res.status(fallbackErr.response.status).json(fallbackErr.response.data);
+        }
+
+        console.error('Permission fallback failed:', fallbackErr.message);
+      }
+    }
+
     if (err.response) {
       // Python engine returned an error
       return res.status(err.response.status).json(err.response.data);
     }
     console.error('Scan URL error:', err.message);
     res.status(500).json({ error: 'Scan failed. Please try again.' });
+  }
+});
+
+// ─── POST /api/scan/permissions ──────────────────────────────────────────────
+// Direct permission-based scan endpoint for explicit fallback flows.
+router.post('/permissions', authMiddleware, async (req, res) => {
+  try {
+    const { url } = req.body;
+    if (!url) return res.status(400).json({ error: 'URL is required' });
+
+    const fallbackResult = await runPermissionFallback(url, req.user.id);
+    res.json(fallbackResult);
+  } catch (err) {
+    if (err.response) {
+      return res.status(err.response.status).json(err.response.data);
+    }
+
+    console.error('Permission scan error:', err.message);
+    res.status(500).json({ error: 'Permission scan failed. Please try again.' });
   }
 });
 

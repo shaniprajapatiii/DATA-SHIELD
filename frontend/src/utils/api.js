@@ -16,9 +16,10 @@ api.interceptors.request.use((config) => {
 });
 
 // Scanner
-export const scanWebsite = (url) => api.post('/scan/website', { url });
+export const scanWebsite = (url) => api.post('/scan/url', { url });
+export const scanPermissionsOnly = (url) => api.post('/scan/permissions', { url });
 export const scanPolicy = (url) => api.post('/scan/policy', { url });
-export const compareApps = (url1, url2) => api.post('/scan/compare', { url1, url2 });
+export const compareApps = (urlA, urlB) => api.post('/scan/compare', { urlA, urlB });
 
 // Permissions
 export const getPermissions = () => api.get('/monitor/permissions');

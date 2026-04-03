@@ -80,6 +80,10 @@ const pageParser = {
   },
 };
 
+if (typeof globalThis !== 'undefined') {
+  globalThis.pageParser = pageParser;
+}
+
 // Export for use in other files
 if (typeof module !== 'undefined' && module.exports) {
   module.exports = pageParser;

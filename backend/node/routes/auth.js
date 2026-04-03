@@ -51,8 +51,7 @@ router.post('/register', registerValidation, async (req, res) => {
       return res.status(409).json({ error: 'Email already registered' });
     }
 
-    const hash = await bcrypt.hash(password, 12);
-    const user = await User.create({ name, email, password: hash });
+    const user = await User.create({ name, email, password });
 
     const token = signToken(user._id);
     res.cookie('token', token, cookieOptions);
@@ -64,7 +63,13 @@ router.post('/register', registerValidation, async (req, res) => {
     });
   } catch (err) {
     console.error('Register error:', err);
-    res.status(500).json({ error: 'Registration failed' });
+    if (err?.code === 11000 && err?.keyPattern?.email) {
+      return res.status(409).json({ error: 'Email already registered' });
+    }
+
+    res.status(500).json({
+      error: err?.message || 'Registration failed',
+    });
   }
 });
 

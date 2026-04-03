@@ -24,6 +24,12 @@ async function populateCurrentUrl() {
 // ── Load and display the latest scan result ────────────────────────────────────
 async function loadAndDisplayResult() {
   try {
+    const auth = await sendRuntimeMessage({ type: 'GET_AUTH_TOKEN' });
+    if (!auth?.token) {
+      showAuthPrompt();
+      return;
+    }
+
     const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
     if (!tab?.url) {
       showAuthPrompt();
@@ -31,19 +37,32 @@ async function loadAndDisplayResult() {
     }
 
     // Get cached result or trigger new scan
-    chrome.runtime.sendMessage(
-      { type: 'GET_CACHED_RESULT', url: tab.url },
-      (result) => {
-        if (result && result.risk_score != null) {
-          displayResult(result);
-        } else {
-          showAuthPrompt();
-        }
+    chrome.runtime.sendMessage({ type: 'GET_CACHED_RESULT', url: tab.url }, (result) => {
+      if (result && result.risk_score != null) {
+        displayResult(result);
+        return;
       }
-    );
+
+      // Authenticated users without cached scans should still see the scan UI.
+      document.getElementById('loadingState').style.display = 'none';
+      document.getElementById('authPrompt').style.display = 'none';
+      document.getElementById('resultsState').style.display = 'block';
+      document.getElementById('scoreNumber').textContent = '0';
+      document.getElementById('riskBadge').textContent = 'READY';
+      document.getElementById('tldrText').textContent = 'No cached result yet. Click Full Scan to analyze this page.';
+      document.getElementById('permissionList').innerHTML = '<div style="color:#64748b;font-size:12px;">No scan yet</div>';
+      document.getElementById('redFlagList').innerHTML = '<div style="color:#64748b;font-size:12px;">No scan yet</div>';
+      document.getElementById('bulletList').innerHTML = '<li>Click Full Scan to fetch live risk analysis.</li>';
+    });
   } catch (err) {
     showAuthPrompt();
   }
+}
+
+function sendRuntimeMessage(payload) {
+  return new Promise((resolve) => {
+    chrome.runtime.sendMessage(payload, (response) => resolve(response));
+  });
 }
 
 // ── Display scan result in popup ───────────────────────────────────────────────
@@ -204,6 +223,8 @@ function setupButtonHandlers() {
         (result) => {
           if (result && !result.error) {
             displayResult(result);
+          } else if (result?.unauthenticated) {
+            showAuthPrompt();
           } else {
             alert('Scan failed: ' + (result?.error || 'Unknown error'));
           }

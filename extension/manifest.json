@@ -1,0 +1,57 @@
+{
+  "manifest_version": 3,
+  "name": "DataShield – Privacy Analyzer",
+  "short_name": "DataShield",
+  "version": "1.0.0",
+  "description": "Real-time privacy risk scoring for every website you visit. Powered by AI.",
+
+  "action": {
+    "default_popup": "popup.html",
+    "default_title": "DataShield – Click to scan this page"
+  },
+
+  "background": {
+    "service_worker": "background-refactored.js"
+  },
+
+  "content_scripts": [
+    {
+      "matches": ["<all_urls>"],
+      "js": [
+        "utils/dom-scanner.js",
+        "utils/page-parser.js",
+        "utils/policy-finder.js",
+        "utils/risk-overlay.js",
+        "content-refactored.js"
+      ],
+      "run_at": "document_idle",
+      "all_frames": false
+    }
+  ],
+
+  "permissions": [
+    "activeTab",
+    "storage",
+    "tabs",
+    "notifications",
+    "cookies"
+  ],
+
+  "host_permissions": [
+    "<all_urls>"
+  ],
+
+  "content_security_policy": {
+    "extension_pages": "script-src 'self'; object-src 'self'"
+  },
+
+  "commands": {
+    "scan-current-tab": {
+      "suggested_key": {
+        "default": "Ctrl+Shift+S",
+        "mac": "Command+Shift+S"
+      },
+      "description": "Scan the current tab with DataShield"
+    }
+  }
+}

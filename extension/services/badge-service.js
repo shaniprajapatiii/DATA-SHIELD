@@ -54,6 +54,10 @@ const badgeService = {
   },
 };
 
+if (typeof globalThis !== 'undefined') {
+  globalThis.badgeService = badgeService;
+}
+
 if (typeof module !== 'undefined' && module.exports) {
   module.exports = badgeService;
 }

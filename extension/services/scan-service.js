@@ -33,7 +33,20 @@ const scanService = {
       });
 
       if (!resp.ok) {
-        const err = await resp.json();
+        let err = {};
+        try {
+          err = await resp.json();
+        } catch {
+          err = { error: 'Scan failed' };
+        }
+
+        if (resp.status === 401 || resp.status === 403) {
+          return {
+            error: err.error || 'Not authenticated',
+            unauthenticated: true,
+          };
+        }
+
         return { error: err.error || 'Scan failed' };
       }
 
@@ -90,6 +103,10 @@ const scanService = {
     }
   },
 };
+
+if (typeof globalThis !== 'undefined') {
+  globalThis.scanService = scanService;
+}
 
 if (typeof module !== 'undefined' && module.exports) {
   module.exports = scanService;

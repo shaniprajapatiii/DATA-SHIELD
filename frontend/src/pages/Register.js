@@ -28,8 +28,8 @@ export default function Register() {
       await register(form.email, form.password, form.name);
       toast.success('Account created. Shield activated.');
       navigate('/dashboard');
-    } catch {
-      toast.error('Registration failed. Try again.');
+    } catch (err) {
+      toast.error(err?.message || 'Registration failed. Try again.');
     } finally {
       setLoading(false);
     }
@@ -114,6 +114,9 @@ export default function Register() {
                   {showPass ? <EyeOff size={15} /> : <Eye size={15} />}
                 </button>
               </div>
+              <p className="mt-2 font-mono text-[11px] text-slate-600 leading-relaxed">
+                Password must be at least 8 characters and include uppercase, lowercase, and a number.
+              </p>
             </div>
 
             <button

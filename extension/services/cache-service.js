@@ -88,6 +88,10 @@ const cacheService = {
   },
 };
 
+if (typeof globalThis !== 'undefined') {
+  globalThis.cacheService = cacheService;
+}
+
 if (typeof module !== 'undefined' && module.exports) {
   module.exports = cacheService;
 }

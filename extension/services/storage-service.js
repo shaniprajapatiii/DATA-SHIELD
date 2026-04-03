@@ -72,6 +72,10 @@ const storageService = {
   },
 };
 
+if (typeof globalThis !== 'undefined') {
+  globalThis.storageService = storageService;
+}
+
 if (typeof module !== 'undefined' && module.exports) {
   module.exports = storageService;
 }

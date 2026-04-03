@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Search, Zap, AlertTriangle, CheckCircle, XCircle, Globe, Shield, ExternalLink } from 'lucide-react';
+import { Zap, AlertTriangle, CheckCircle, XCircle, Globe, Shield, ExternalLink, FileText } from 'lucide-react';
 import { useScanner } from '../hooks/useScanner';
 import RiskScore from '../components/ui/RiskScore';
 import PermissionBadge from '../components/ui/PermissionBadge';
@@ -45,8 +45,27 @@ function ScanResult({ result }) {
   const sentimentColors = { Hostile: '#ff2d55', Neutral: '#ff6b00', Protective: '#00ff88' };
   const sColor = sentimentColors[result.sentiment] || '#00f5ff';
 
+  const scoreMeta = [
+    { label: 'Target', value: result.pageTitle || result.targetUrl || 'Unknown' },
+    { label: 'Policy URL', value: result.policyUrl || 'Not found' },
+    { label: 'Engine', value: result.engineVersion || 'unknown' },
+    { label: 'Scan Time', value: result.scanDurationMs != null ? `${result.scanDurationMs} ms` : 'n/a' },
+  ];
+
   return (
     <div className="space-y-6 animate-fade-in">
+      {result.partial && result.fallbackReason === 'policy_not_found' && (
+        <div className="flex items-start gap-3 p-4 border border-[rgba(255,107,0,0.35)] bg-[rgba(255,107,0,0.08)] rounded-sm">
+          <AlertTriangle size={16} className="text-[#ff6b00] mt-0.5" />
+          <div>
+            <p className="font-mono text-xs text-[#ffb36b] uppercase tracking-wider mb-1">Policy Not Found</p>
+            <p className="font-mono text-xs text-slate-300 leading-relaxed">
+              No privacy policy text could be extracted for this site. Showing permission-based risk detection only.
+            </p>
+          </div>
+        </div>
+      )}
+
       {/* Top row */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         {/* Score */}
@@ -58,16 +77,22 @@ function ScanResult({ result }) {
         {/* Summary */}
         <div className="card-glass rounded-sm p-6 space-y-4">
           <p className="font-mono text-xs text-slate-500 uppercase tracking-widest">Policy Summary</p>
-          {[
-            { label: 'Data Collected', val: result.summary.collected },
-            { label: 'Shared With', val: result.summary.sharedWith },
-            { label: 'Retained For', val: result.summary.retainedFor },
-          ].map(({ label, val }) => (
+          <div className="space-y-3">
+            <div>
+              <p className="font-mono text-xs text-slate-600 mb-1">TL;DR</p>
+              <p className="font-mono text-xs text-slate-300 leading-relaxed">{result.summary.tldr}</p>
+            </div>
+            {[
+              { label: 'Data Collected', val: result.summary.collected },
+              { label: 'Shared With', val: result.summary.sharedWith },
+              { label: 'Retained For', val: result.summary.retainedFor },
+            ].map(({ label, val }) => (
             <div key={label} className="border-b border-[rgba(255,255,255,0.05)] pb-3">
               <p className="font-mono text-xs text-slate-600 mb-1">{label}</p>
               <p className="font-mono text-xs text-slate-300">{val}</p>
             </div>
-          ))}
+            ))}
+          </div>
         </div>
 
         {/* Meta */}
@@ -102,13 +127,60 @@ function ScanResult({ result }) {
         </div>
       </div>
 
+      {/* Scan metadata */}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
+        {scoreMeta.map(({ label, value }) => (
+          <div key={label} className="card-glass rounded-sm p-4">
+            <p className="font-mono text-[10px] text-slate-500 uppercase tracking-widest mb-2">{label}</p>
+            <p className="font-mono text-xs text-slate-300 break-words leading-relaxed">{value}</p>
+          </div>
+        ))}
+      </div>
+
       {/* Permissions */}
       <div className="card-glass rounded-sm p-6">
-        <p className="font-mono text-xs text-slate-500 uppercase tracking-widest mb-4">Permission Analysis</p>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-          {result.permissions.map((p, i) => (
-            <PermissionBadge key={i} {...p} pulse={p.status === 'active'} />
-          ))}
+        <p className="font-mono text-xs text-slate-500 uppercase tracking-widest mb-4">
+          Permission Analysis ({result.permissions.length})
+        </p>
+        {result.permissions.length > 0 ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+            {result.permissions.map((p, i) => (
+              <PermissionBadge key={`${p.type}-${i}`} {...p} pulse={p.status === 'active'} />
+            ))}
+          </div>
+        ) : (
+          <div className="font-mono text-xs text-slate-500">No permission/API signals detected on this page.</div>
+        )}
+      </div>
+
+      {/* Policy findings and score breakdown */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div className="card-glass rounded-sm p-6">
+          <p className="font-mono text-xs text-slate-500 uppercase tracking-widest mb-4">Policy Findings</p>
+          <div className="space-y-2">
+            {result.policyFindings.length > 0 ? result.policyFindings.map((finding, index) => (
+              <div key={index} className="flex items-start gap-2 p-3 rounded-sm border border-[rgba(255,255,255,0.05)] bg-[rgba(255,255,255,0.02)]">
+                <FileText size={14} className="text-[var(--accent)] mt-0.5 flex-shrink-0" />
+                <span className="font-mono text-xs text-slate-300 leading-relaxed">{finding}</span>
+              </div>
+            )) : (
+              <div className="font-mono text-xs text-slate-600">No policy findings reported.</div>
+            )}
+          </div>
+        </div>
+
+        <div className="card-glass rounded-sm p-6">
+          <p className="font-mono text-xs text-slate-500 uppercase tracking-widest mb-4">Score Breakdown</p>
+          <div className="space-y-2">
+            {result.scoreBreakdown.length > 0 ? result.scoreBreakdown.map(({ label, value }) => (
+              <div key={label} className="flex items-center justify-between p-3 rounded-sm border border-[rgba(255,255,255,0.05)] bg-[rgba(255,255,255,0.02)]">
+                <span className="font-mono text-xs text-slate-400 capitalize">{label}</span>
+                <span className="font-mono text-xs text-white">{value}</span>
+              </div>
+            )) : (
+              <div className="font-mono text-xs text-slate-600">No score breakdown provided.</div>
+            )}
+          </div>
         </div>
       </div>
 

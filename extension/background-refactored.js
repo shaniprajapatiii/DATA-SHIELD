@@ -3,6 +3,15 @@
  * Manages automatic scanning, caching, notifications, and badge updates
  */
 
+importScripts(
+  'services/auth-service.js',
+  'services/badge-service.js',
+  'services/cache-service.js',
+  'services/notification-service.js',
+  'services/scan-service.js',
+  'services/storage-service.js'
+);
+
 // ─── On Install ───────────────────────────────────────────────────────────────
 chrome.runtime.onInstalled.addListener(async ({ reason }) => {
   if (reason === 'install') {
@@ -53,6 +62,10 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
 
     case 'SET_AUTH_TOKEN':
       authService.setToken(message.token).then(() => sendResponse({ saved: true }));
+      return true;
+
+    case 'CLEAR_AUTH_TOKEN':
+      authService.clearToken().then(() => sendResponse({ cleared: true }));
       return true;
 
     default:
