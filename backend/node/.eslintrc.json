@@ -1,0 +1,42 @@
+{
+  "env": {
+    "node": true,
+    "es2021": true,
+    "jest": true
+  },
+  "extends": [
+    "airbnb-base"
+  ],
+  "parserOptions": {
+    "ecmaVersion": "latest",
+    "sourceType": "module"
+  },
+  "rules": {
+    "no-console": [
+      "warn",
+      {
+        "allow": [
+          "warn",
+          "error",
+          "log"
+        ]
+      }
+    ],
+    "no-unused-vars": [
+      "error",
+      {
+        "argsIgnorePattern": "^_"
+      }
+    ],
+    "consistent-return": "warn",
+    "no-param-reassign": [
+      "error",
+      {
+        "props": false
+      }
+    ],
+    "func-names": "off",
+    "object-shorthand": "warn",
+    "prefer-arrow-callback": "warn"
+  }
+}

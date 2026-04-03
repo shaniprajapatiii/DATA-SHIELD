@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>DataShield</title>
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@700;900&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    :root {
+      --accent: #00f5ff;
+      --green: #00ff88;
+      --red: #ff2d55;
+      --orange: #ff6b00;
+      --bg: #0a0f1e;
+      --bg2: #0f1729;
+    }
+    body {
+      width: 340px;
+      min-height: 480px;
+      background: var(--bg);
+      color: #e2e8f0;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 12px;
+    }
+
+    /* Header */
+    .header {
+      padding: 12px 16px;
+      background: #030712;
+      border-bottom: 1px solid rgba(0,245,255,0.12);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .logo { display: flex; align-items: center; gap: 8px; }
+    .logo-text { font-family: 'Orbitron', sans-serif; font-weight: 900; font-size: 13px; letter-spacing: 2px; color: white; }
+    .logo-text span { color: var(--accent); }
+    .status-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--green); box-shadow: 0 0 6px var(--green); animation: pulse 2s infinite; }
+
+    /* Current site */
+    .site-info { padding: 12px 16px; border-bottom: 1px solid rgba(255,255,255,0.05); }
+    .site-url { color: var(--accent); font-size: 11px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .site-label { color: #475569; font-size: 10px; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 3px; }
+
+    /* Score */
+    .score-section { padding: 16px; display: flex; align-items: center; gap: 16px; border-bottom: 1px solid rgba(255,255,255,0.05); }
+    .score-ring { position: relative; width: 72px; height: 72px; }
+    .score-ring svg { transform: rotate(-90deg); }
+    .score-center { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+    .score-num { font-family: 'Orbitron', sans-serif; font-weight: 900; font-size: 20px; }
+    .score-label { font-size: 9px; color: #475569; }
+    .score-meta { flex: 1; }
+    .risk-badge { display: inline-flex; align-items: center; gap: 5px; padding: 3px 8px; border-radius: 2px; font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px; }
+    .risk-desc { color: #64748b; font-size: 10px; line-height: 1.5; }
+
+    /* Scan btn */
+    .scan-btn {
+      margin: 12px 16px;
+      width: calc(100% - 32px);
+      padding: 10px;
+      background: var(--accent);
+      color: #030712;
+      font-family: 'Orbitron', sans-serif;
+      font-weight: 700;
+      font-size: 11px;
+      letter-spacing: 2px;
+      border: none;
+      cursor: pointer;
+      border-radius: 2px;
+      transition: background 0.2s;
+    }
+    .scan-btn:hover { background: white; }
+    .scan-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+    /* Permissions */
+    .section-title { padding: 10px 16px 6px; font-size: 10px; color: #475569; text-transform: uppercase; letter-spacing: 1.5px; }
+    .permission-list { padding: 0 16px; display: flex; flex-direction: column; gap: 5px; }
+    .perm-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 7px 10px;
+      border-radius: 2px;
+      border: 1px solid rgba(255,255,255,0.05);
+    }
+    .perm-dot { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; }
+    .perm-name { flex: 1; font-size: 11px; color: #e2e8f0; }
+    .perm-status { font-size: 10px; text-transform: uppercase; }
+    .active { color: var(--red); }
+    .blocked { color: var(--green); }
+    .idle { color: #475569; }
+    .requested { color: var(--orange); }
+
+    /* Footer */
+    .ext-footer { padding: 10px 16px; border-top: 1px solid rgba(255,255,255,0.05); display: flex; justify-content: space-between; align-items: center; margin-top: 10px; }
+    .open-link { color: var(--accent); font-size: 10px; cursor: pointer; text-decoration: none; }
+    .open-link:hover { text-decoration: underline; }
+
+    @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .loading-ring { animation: spin 1s linear infinite; }
+  </style>
+</head>
+<body>
+  <!-- Header -->
+  <div class="header">
+    <div class="logo">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#00f5ff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+      </svg>
+      <span class="logo-text">DATA<span>SHIELD</span></span>
+    </div>
+    <div class="status-dot" id="statusDot"></div>
+  </div>
+
+  <!-- Current Site -->
+  <div class="site-info">
+    <div class="site-label">Current Site</div>
+    <div class="site-url" id="currentUrl">Loading...</div>
+  </div>
+
+  <!-- Score -->
+  <div class="score-section">
+    <div class="score-ring">
+      <svg width="72" height="72" viewBox="0 0 72 72">
+        <circle cx="36" cy="36" r="28" fill="none" stroke="rgba(255,255,255,0.06)" stroke-width="6"/>
+        <circle id="scoreArc" cx="36" cy="36" r="28" fill="none" stroke="#00f5ff" stroke-width="6"
+          stroke-dasharray="175.9" stroke-dashoffset="175.9" stroke-linecap="round"
+          style="transition: stroke-dashoffset 1s ease, stroke 0.5s ease; filter: drop-shadow(0 0 4px #00f5ff)"/>
+      </svg>
+      <div class="score-center">
+        <span class="score-num" id="scoreNum" style="color: #00f5ff">--</span>
+        <span class="score-label">/100</span>
+      </div>
+    </div>
+    <div class="score-meta">
+      <div class="risk-badge" id="riskBadge">ANALYZING...</div>
+      <div class="risk-desc" id="riskDesc">Scanning privacy policy and permissions...</div>
+    </div>
+  </div>
+
+  <!-- Scan Button -->
+  <button class="scan-btn" id="scanBtn" onclick="triggerScan()">⚡ SCAN THIS SITE</button>
+
+  <!-- Permissions -->
+  <div class="section-title">Live Permissions</div>
+  <div class="permission-list" id="permList">
+    <div style="color:#475569; font-size:11px; padding: 8px 0;">Waiting for scan...</div>
+  </div>
+
+  <!-- Footer -->
+  <div class="ext-footer">
+    <span style="color:#475569; font-size:10px;">DataShield v1.0</span>
+    <a class="open-link" href="http://localhost:3000" target="_blank">Open Dashboard →</a>
+  </div>
+
+  <script src="popup.js"></script>
+</body>
+</html>

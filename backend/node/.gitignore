@@ -1,0 +1,42 @@
+# Dependencies
+node_modules/
+/.pnp
+.pnp.js
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+# IDEs
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.sublime-project
+.sublime-workspace
+
+# OS
+.DS_Store
+Thumbs.db
+.AppleDouble
+
+# Build
+build/
+dist/
+.cache/
+
+# Misc
+*.pid
+*.seed
+*.pid.lock
